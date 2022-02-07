@@ -15,7 +15,7 @@ import (
 
 type client struct {
 	clientChan chan<- string // an outgoing message channel
-	clientName string
+	clientName string        //name of client connected
 }
 
 var (
@@ -54,7 +54,9 @@ func broadcaster() {
 
 		case cli := <-entering:
 			clients[cli] = true
-			cli.clientChan <- "Users Connected:"
+			// print set of clients connected beofre by storing in client channel
+			cli.clientChan <- "Welcome " + cli.clientName + "\nUsers Connected :"
+			// store all connected client's name in clientchan
 			for entered_clients := range clients {
 				cli.clientChan <- entered_clients.clientName
 			}
@@ -83,7 +85,6 @@ func handleConn(conn net.Conn) {
 		messages <- who + ": " + input.Text()
 	}
 	// NOTE: ignoring potential errors from input.Err()
-
 	leaving <- tmp
 	messages <- who + " has left"
 	conn.Close()
@@ -92,7 +93,6 @@ func handleConn(conn net.Conn) {
 func clientWriter(conn net.Conn, ch <-chan string) {
 
 	for msg := range ch {
-		fmt.Println("in clientWriter..")
 		fmt.Fprintln(conn, msg) // NOTE: ignoring network errors
 	}
 }
