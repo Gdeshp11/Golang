@@ -30,7 +30,7 @@ type database map[string]dollars
 func (db database) list(w http.ResponseWriter, req *http.Request) {
 	RWLock.Lock()
 	for item, price := range db {
-		fmt.Fprintf(w, "%s: %s\n", item, price)
+		fmt.Fprintf(w, "\n%s: %s", item, price)
 	}
 	RWLock.Unlock()
 }

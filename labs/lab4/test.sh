@@ -6,6 +6,12 @@ list()
     curl -w "\n" "http://localhost:8000/list"
 }
 
+price()
+{
+    echo "price of item: $1"
+    curl -w "\n" "http://localhost:8000/price?item=$1"
+}
+
 create()
 {
     echo "adding item: $1 in database of price: $2"
@@ -24,29 +30,34 @@ delete()
     curl -w "\n" "http://localhost:8000/delete?item=$1"
 }
  
-printf "Enter input--->\nlist\ncreate\nupdate\ndelete\n"
+printf "Enter input--->\nlist\nprice\ncreate\nupdate\ndelete\n"
 read OPTION
 case $OPTION in
   list)
     list
     ;;
 
+  price)
+    read -p "Enter item: " ITEM
+    price $ITEM
+    ;;
+
   create)
-    read -p "Enter item" ITEM
-    echo "Enter price of item"
+    read -p "Enter item: " ITEM
+    echo "Enter price of item: "
     read PRICE
     create $ITEM $PRICE
     ;;
 
   update)
-    read -p "Enter item" ITEM
-    echo "Enter price of item"
+    read -p "Enter item: " ITEM
+    echo "Enter price of item: "
     read PRICE
     update $ITEM $PRICE
     ;;
 
     delete)
-    read -p "Enter item" ITEM
+    read -p "Enter item: " ITEM
     delete $ITEM
     ;;
 
