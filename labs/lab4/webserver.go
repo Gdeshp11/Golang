@@ -16,6 +16,8 @@ func main() {
 	mux.HandleFunc("/list", db.list)
 	mux.HandleFunc("/price", db.price)
 	mux.HandleFunc("/create", db.create)
+	mux.HandleFunc("/update", db.update)
+	mux.HandleFunc("/delete", db.delete)
 	log.Fatal(http.ListenAndServe("localhost:8000", mux))
 }
 
@@ -28,7 +30,7 @@ type database map[string]dollars
 func (db database) list(w http.ResponseWriter, req *http.Request) {
 	RWLock.Lock()
 	for item, price := range db {
-		fmt.Fprintf(w, "%s: %s\n", item, price)
+		fmt.Fprintf(w, "%s: %s", item, price)
 	}
 	RWLock.Unlock()
 }
@@ -63,7 +65,42 @@ func (db database) create(w http.ResponseWriter, req *http.Request) {
 			RWLock.Unlock()
 		}
 	} else {
-		fmt.Println("Please provide price of Item")
+		fmt.Fprintf(w, "Please provide price of Item")
 	}
 
+}
+
+func (db database) update(w http.ResponseWriter, req *http.Request) {
+	item := req.URL.Query().Get("item")
+	//convert string to float and get error status ok
+	priceStr := req.URL.Query().Get("price")
+	priceFloat, ok := strconv.ParseFloat(priceStr, 32)
+	RWLock.Lock()
+	if _, itemExist := db[item]; itemExist {
+		if ok == nil {
+			db[item] = dollars(priceFloat)
+			RWLock.Unlock()
+			fmt.Fprintf(w, "updated price of item %s: %s", item, dollars(priceFloat))
+
+		} else {
+			fmt.Fprintf(w, "Invalid price %s", priceStr)
+			RWLock.Unlock()
+		}
+	} else {
+		fmt.Fprintf(w, "%s does not exist in list", item)
+		RWLock.Unlock()
+	}
+}
+
+func (db database) delete(w http.ResponseWriter, req *http.Request) {
+	item := req.URL.Query().Get("item")
+	RWLock.Lock()
+	if _, itemExist := db[item]; itemExist {
+		delete(db, item)
+		RWLock.Unlock()
+		fmt.Fprintf(w, "deleted item %s", item)
+	} else {
+		fmt.Fprintf(w, "%s does not exist in list", item)
+		RWLock.Unlock()
+	}
 }
