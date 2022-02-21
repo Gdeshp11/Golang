@@ -50,6 +50,7 @@ func (s *server) GetMovieInfo(ctx context.Context, in *movieapi.MovieRequest) (*
 
 // GetMovieInfo implements movieapi.MovieInfoServer
 func (s *server) SetMovieInfo(ctx context.Context, in *movieapi.MovieData) (*movieapi.Status, error) {
+	// Get movie data
 	title := in.GetTitle()
 	year := in.GetYear()
 	director := in.GetDirector()
@@ -63,7 +64,7 @@ func (s *server) SetMovieInfo(ctx context.Context, in *movieapi.MovieData) (*mov
 	if _, ok := moviedb[title]; !ok { // update only if Title not present in database
 		moviedata := []string{strconv.Itoa(int(year)), title}
 		moviedata = append(moviedata, cast...)
-		moviedb[title] = moviedata
+		moviedb[title] = moviedata //add movie data into database
 		reply.Code = "success"
 	} else {
 		return reply, errors.New("movie already exist in database")
