@@ -1,7 +1,7 @@
 package main
 
 import (
-	"labs/lab6-external-rest-api/weather"
+	"labs/lab6/weather"
 )
 
 func main() {

@@ -19,6 +19,7 @@ func (t Temperature) Fahrenheit() float64 {
 	return (float64(t)-273.15)*(9.0/5.0) + 32.0
 }
 
+// added pressure,humidity and windspeed to store those conditions
 type Conditions struct {
 	Summary     string
 	Temperature Temperature
@@ -27,6 +28,7 @@ type Conditions struct {
 	WindSpeed   Speed
 }
 
+// added pressure humidity in Main struct and wind speed struct
 type OWMResponse struct {
 	Weather []struct {
 		Main string
@@ -96,8 +98,7 @@ func ParseResponse(data []byte) (Conditions, error) {
 		return Conditions{}, fmt.Errorf("invalid API response %s: require at least one weather element", data)
 	}
 
-	// fmt.Println("received json resp: ", resp)
-
+	// fill in the conditions struct with response received
 	conditions := Conditions{
 		Summary:     resp.Weather[0].Main,
 		Temperature: resp.Main.Temp,
@@ -137,7 +138,7 @@ func RunCLI() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	// fmt.Printf("%s %.1fº\n", conditions.Summary, conditions.Temperature.Fahrenheit())
+
 	fmt.Println("Location: ", location)
 	fmt.Println("\n----Conditions----\nSummary: " + conditions.Summary)
 	fmt.Printf("Temperature: %.1fº", conditions.Temperature.Fahrenheit())

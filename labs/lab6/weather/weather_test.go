@@ -12,13 +12,16 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+//Tests response
 func TestParseResponse(t *testing.T) {
 	t.Parallel()
+	// Reads from the JSON file
 	data, err := ioutil.ReadFile("testdata/weather_data.json")
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := Conditions{
+		//Conditions that should be in dummy file
 		Summary:     "Clouds",
 		Temperature: 281.33,
 		Pressure:    1000,
@@ -27,14 +30,17 @@ func TestParseResponse(t *testing.T) {
 	}
 	got, err := ParseResponse(data)
 	if err != nil {
+		// Throws error if there is an error
 		t.Fatal(err)
 	}
 	if !cmp.Equal(want, got) {
+		// If the response is not the correct data, throws error
 		t.Error(cmp.Diff(want, got))
 	}
 }
 
 func TestParseResponseEmpty(t *testing.T) {
+	// Tests if there is a reponse if sending a nil response
 	t.Parallel()
 	_, err := ParseResponse([]byte{})
 	if err == nil {
@@ -44,6 +50,7 @@ func TestParseResponseEmpty(t *testing.T) {
 
 func TestParseResponseInvalid(t *testing.T) {
 	t.Parallel()
+	// If if sends invalid information, it should revieve an error in response
 	data, err := ioutil.ReadFile("testdata/weather_invalid_data.json")
 	if err != nil {
 		t.Fatal(err)
@@ -56,6 +63,7 @@ func TestParseResponseInvalid(t *testing.T) {
 
 func TestFormatURL(t *testing.T) {
 	t.Parallel()
+	// Tests whether it can transpform city and country names into a correct API query
 	c := NewClient("dummyAPIKey")
 	location := "Paris,FR"
 	want := "https://api.openweathermap.org/data/2.5/weather?q=Paris%2CFR&appid=dummyAPIKey"
@@ -67,6 +75,7 @@ func TestFormatURL(t *testing.T) {
 
 func TestFormatURLSpaces(t *testing.T) {
 	t.Parallel()
+	// Tests if it eliminates space keys to get correct names for query
 	c := NewClient("dummyAPIKey")
 	location := "Wagga Wagga,AU"
 	want := "https://api.openweathermap.org/data/2.5/weather?q=Wagga+Wagga%2CAU&appid=dummyAPIKey"
@@ -78,6 +87,7 @@ func TestFormatURLSpaces(t *testing.T) {
 
 func TestSimpleHTTP(t *testing.T) {
 	t.Parallel()
+	// Tests if it can get a connection to API, if internet is broken, throw error
 	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Hello, client")
 	}))
@@ -97,6 +107,7 @@ func TestSimpleHTTP(t *testing.T) {
 
 func TestGetWeather(t *testing.T) {
 	t.Parallel()
+	// Tests whether it returns all the desired information
 	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f, err := os.Open("testdata/weather_data.json")
 		if err != nil {
@@ -137,6 +148,7 @@ func TestFahrenheit(t *testing.T) {
 
 func TestPressure(t *testing.T) {
 	t.Parallel()
+	// Tests added functions, that is to say tests if the different parameters meant to be returned are correct
 	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f, err := os.Open("testdata/weather_data.json")
 		if err != nil {
@@ -150,7 +162,7 @@ func TestPressure(t *testing.T) {
 	c := NewClient("dummyAPIkey")
 	c.BaseURL = ts.URL
 	c.HTTPClient = ts.Client()
-
+	// If Pressure is not equal to 1000, it throws an error
 	input, _ := c.GetWeather("Paris,FR")
 	want := Pressure(1000)
 	got := input.Pressure
@@ -170,6 +182,8 @@ func TestHumidity(t *testing.T) {
 		defer f.Close()
 		io.Copy(w, f)
 	}))
+	// Tests if weather.go successfully sends information regarding Humidity
+	// Otherwise throws error
 	defer ts.Close()
 	c := NewClient("dummyAPIkey")
 	c.BaseURL = ts.URL
@@ -193,6 +207,7 @@ func TestWindspeed(t *testing.T) {
 		defer f.Close()
 		io.Copy(w, f)
 	}))
+	// Tests if returns correct information about windspeed.
 	defer ts.Close()
 	c := NewClient("dummyAPIkey")
 	c.BaseURL = ts.URL

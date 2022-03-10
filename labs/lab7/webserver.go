@@ -18,7 +18,7 @@ func main() {
 	mux.HandleFunc("/create", db.create)
 	mux.HandleFunc("/update", db.update)
 	mux.HandleFunc("/delete", db.delete)
-	log.Fatal(http.ListenAndServe("localhost:8000", mux)) // Listens for curl communication of localhost
+	log.Fatal(http.ListenAndServe(":8000", mux)) // Listens for curl communication of localhost
 }
 
 type dollars float32
