@@ -67,7 +67,6 @@ func (d dollars) String() string { return fmt.Sprintf("$%.2f", d) }
 // type database map[string]dollars // database of items with their polar prices
 
 func list(w http.ResponseWriter, req *http.Request) {
-	RWLock.Lock() // Locks in case of multiple reads/writes
 
 	// filter posts tagged as golang
 	filter := bson.M{"tags": "products"}
@@ -92,7 +91,6 @@ func list(w http.ResponseWriter, req *http.Request) {
 	if err := cursor.Err(); err != nil {
 		log.Fatal(err)
 	}
-	RWLock.Unlock()
 
 }
 
@@ -100,10 +98,8 @@ func list(w http.ResponseWriter, req *http.Request) {
 func price(w http.ResponseWriter, req *http.Request) {
 	item := req.URL.Query().Get("item") //Gets the item from the query
 	fmt.Fprintf(w, "Item:%s\n", item)
-	RWLock.Lock() //locks the system
 
-	// filter posts tagged as golang
-	// filter := bson.M{"product_name": bson.M{"$elemMatch": bson.M{"$eq": item}}}
+	//filter based on product name
 	filter := bson.M{"product_name": item}
 
 	// find one document
@@ -111,13 +107,11 @@ func price(w http.ResponseWriter, req *http.Request) {
 	if err := col.FindOne(ctx, filter).Decode(&p); err != nil {
 		fmt.Fprint(w, "ERROR:", err)
 		// fmt.Fprintf(w, "no such item: %q\n", item) // if the item does not exist write and error
-		RWLock.Unlock()
+
 	} else {
 		fmt.Printf("post: %+v\n", p)
 		fmt.Fprintf(w, "Price of %s:%s\n", item, p.Price)
-		RWLock.Unlock()
 	}
-
 }
 
 func create(w http.ResponseWriter, req *http.Request) {
@@ -129,7 +123,6 @@ func create(w http.ResponseWriter, req *http.Request) {
 	if ok == nil {
 		fmt.Fprintf(w, "Adding item: %s ", item)
 		fmt.Fprintf(w, "\nprice: %f", priceFloat)
-		RWLock.Lock() // adds item
 		// Insert one
 		res, err := col.InsertOne(ctx, &Post{
 			ID:           primitive.NewObjectID(),
@@ -142,7 +135,7 @@ func create(w http.ResponseWriter, req *http.Request) {
 		if err == nil {
 			fmt.Printf("inserted id: %s\n", res.InsertedID.(primitive.ObjectID).Hex())
 		}
-		RWLock.Unlock()
+
 	} else {
 		fmt.Fprintf(w, "Invalid price")
 	}
@@ -154,7 +147,7 @@ func update(w http.ResponseWriter, req *http.Request) {
 	priceStr := req.URL.Query().Get("price")
 	priceFloat, ok := strconv.ParseFloat(priceStr, 32)
 
-	RWLock.Lock() // adds item
+	// adds item
 
 	if ok == nil {
 		fmt.Fprintf(w, "Updating item: %s ", item)
@@ -171,12 +164,11 @@ func update(w http.ResponseWriter, req *http.Request) {
 			update)
 
 		if err == nil {
-			fmt.Println("update result: ", res)
+			fmt.Println("update count: ", res.ModifiedCount)
 			fmt.Fprintf(w, "updated price of item:%s-%s\n", item, priceStr)
 		} else {
 			fmt.Fprint(w, "Error:\n", err)
 		}
-		RWLock.Unlock()
 	} else {
 		fmt.Fprintf(w, "Invalid price")
 	}
@@ -184,14 +176,10 @@ func update(w http.ResponseWriter, req *http.Request) {
 
 func delete(w http.ResponseWriter, req *http.Request) {
 	item := req.URL.Query().Get("item") //gets the item name
-	RWLock.Lock()                       //locks system
-
 	res, err := col.DeleteMany(ctx, bson.M{"product_name": item})
 	if err != nil {
-		RWLock.Unlock()
 		log.Fatal(err)
 	} else {
-		RWLock.Unlock()
-		fmt.Fprintln(w, "delete result: ", res)
+		fmt.Fprintln(w, "delete count: ", res.DeletedCount)
 	}
 }

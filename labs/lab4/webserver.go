@@ -70,32 +70,50 @@ func (db database) create(w http.ResponseWriter, req *http.Request) {
 
 }
 
+
 func (db database) update(w http.ResponseWriter, req *http.Request) {
 	item := req.URL.Query().Get("item")
 	//convert string to float and get error status ok
 	priceStr := req.URL.Query().Get("price")
 	priceFloat, ok := strconv.ParseFloat(priceStr, 32)
-	RWLock.Lock() //Works similarly to create, but instead it checks if the item already exists
-	if _, itemExist := db[item]; itemExist {
+	
+	RWLock.Lock() // adds item
+		// Insert one
+	//Works similarly to create, but instead it checks if the item already exists
+	//if _, itemExist := db[item]; itemExist {
 		if ok == nil {
-			db[item] = dollars(priceFloat) // changes the price
-			RWLock.Unlock()
-			fmt.Fprintf(w, "updated price of item %s: %s", item, dollars(priceFloat))
+		fmt.Fprintf(w, "Updating item: %s ", item)
+		fmt.Fprintf(w, "\nprice: %f", priceFloat)
+		
+		res, err := col.UpdateOne(ctx, &Post{
+			ID:           primitive.NewObjectID(),
+			Product_name: item,
+			Price:        dollars(priceFloat),
+			CreatedAt:    time.Now(),
+			Tags:         "products",
+		})
 
-		} else {
-			fmt.Fprintf(w, "Invalid price %s", priceStr)
-			RWLock.Unlock()
+		if err == nil {
+			fmt.Printf("updated id: %s\n", res.UpdatedID.(primitive.ObjectID).Hex())
 		}
-	} else {
-		fmt.Fprintf(w, "%s does not exist in list", item)
 		RWLock.Unlock()
+	} else {
+		fmt.Fprintf(w, "Item not found")
 	}
 }
 
 func (db database) delete(w http.ResponseWriter, req *http.Request) {
 	item := req.URL.Query().Get("item")      //gets the item name
 	RWLock.Lock()                            //locks system
-	if _, itemExist := db[item]; itemExist { //checks if item exists
+	//if _, itemExist := db[item]; itemExist { //checks if item exists
+	res, err := col.DeleteOne(ctx, &Post{
+			ID:           primitive.NewObjectID(),
+			Product_name: item,
+			Price:        dollars(priceFloat),
+			CreatedAt:    time.Now(),
+			Tags:         "products",
+		})
+		RWLock.Unlock()
 		delete(db, item) // deletes the item
 		RWLock.Unlock()  // unlocks
 		fmt.Fprintf(w, "deleted item %s", item)
